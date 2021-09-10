@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    {{- include "ocp-ldap-proxy.labels" . | nindent 4 }}
+  name: {{ include "ocp-ldap-proxy.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.deployment.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "ocp-ldap-proxy.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      creationTimestamp: null
+      {{- with .Values.deployment.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "ocp-ldap-proxy.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.deployment.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "ocp-ldap-proxy.serviceAccountName" . }}
+      containers:
+      - name: ldap-proxy
+        envFrom:
+        - configMapRef:
+            name: {{ include "ocp-ldap-proxy.fullname" . }}-proxy-env-vars
+        image: "{{ .Values.deployment.image.repository }}:{{ .Values.deployment.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+        ports:
+        - containerPort: 6360
+          name: ldaps
+          protocol: TCP
+        readinessProbe:
+          tcpSocket:
+            port: 6360
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+            {{- toYaml .Values.deployment.resources | nindent 12 }}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/tls/private
+          name: tls-serving-cert
+          readOnly: true
+
+      {{- with .Values.deployment.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.deployment.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.deployment.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      volumes:
+      - name: tls-serving-cert
+        secret:
+          defaultMode: 420
+          secretName: {{ include "ocp-ldap-proxy.fullname" . }}-serving-cert

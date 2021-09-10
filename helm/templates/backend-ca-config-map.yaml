@@ -1,0 +1,11 @@
+{{- if .Values.ldapProxy.backend.caCert -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ocp-ldap-proxy.fullname" . }}-proxy-ca
+  namespace: {{ .Release.Namespace }}
+
+data:
+  ca-bundle.crt: |
+    {{ .Values.ldapProxy.backend.caCert | nindent 4 }}
+{{- end }}

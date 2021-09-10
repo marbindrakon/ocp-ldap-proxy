@@ -1,0 +1,16 @@
+{{- if .Values.servingCertSync.enabled -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "ocp-ldap-proxy.fullname" . }}-configmap-sync
+rules:
+- apiGroups:
+  - ""
+  resourceNames:
+  - {{ .Values.servingCertSync.destinationConfigMap }}
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - update
+{{- end }}

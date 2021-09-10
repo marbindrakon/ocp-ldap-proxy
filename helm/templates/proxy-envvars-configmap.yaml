@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ocp-ldap-proxy.fullname" . }}-proxy-env-vars
+  namespace: {{ .Release.Namespace }}
+data:
+  PYTHONUNBUFFERED: "1"
+  LDAP_PROXY_TLS_SECRET_PATH: '/etc/tls/private'
+  PROXY_CONFIG_MAP_NAME: "{{ include "ocp-ldap-proxy.fullname" . }}-config"
+  CA_CONFIG_MAP_NAME: "{{ include "ocp-ldap-proxy.fullname" . }}-proxy-ca"
+  LDAP_PROXY_SERVING_SOURCE_CONFIGMAP: "{{ include "ocp-ldap-proxy.fullname" . }}-serving-ca"
+  LDAP_PROXY_NAMESPACE: {{ .Release.Namespace }}
+{{- if .Values.servingCertSync.enabled }}
+  LDAP_PROXY_SERVING_DEST_CONFIGMAP: {{ .Values.servingCertSync.destinationConfigMap }}
+  LDAP_PROXY_SERVING_DEST_NAMESPACE: {{ .Values.servingCertSync.destinationNamespace }}
+  UPDATE_CA_CONFIGMAP: "1"
+{{- else }}
+  UPDATE_CA_CONFIGMAP: "0"
+{{- end }}

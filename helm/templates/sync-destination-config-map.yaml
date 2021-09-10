@@ -1,0 +1,9 @@
+{{- if .Values.servingCertSync.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.servingCertSync.destinationConfigMap }}
+  namespace: {{ .Values.servingCertSync.destinationNamespace }}
+
+data: {}
+{{- end }}

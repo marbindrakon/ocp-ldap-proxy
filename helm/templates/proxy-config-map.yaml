@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ocp-ldap-proxy.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+data:
+  config.yaml: |
+    bind_tls_options: "{{ .Values.ldapProxy.tls.bindTlsOptions }}"
+    bind_ciphers: "{{ .Values.ldapProxy.tls.bindCiphers }}"
+    
+    server_tls_options: "{{ .Values.ldapProxy.tls.serverTlsOptions }}"
+    server_ciphers: "{{ .Values.ldapProxy.tls.serverCiphers }}"
+    ldap_check: {{ .Values.ldapProxy.backend.ldapCheck }}
+    backend_tls: {{ .Values.ldapProxy.backend.useTls }}
+    primary_server: "{{ .Values.ldapProxy.backend.primaryServer }}"
+  {{- with .Values.ldapProxy.backend.backupServers }}
+    backup_servers:
+      {{- toYaml . | nindent 6 }}
+  {{- end }}

@@ -1,0 +1,17 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "ocp-ldap-proxy.fullname" . }}-role
+rules:
+- apiGroups:
+    - ""
+  resources:
+    - configmaps
+  resourceNames:
+    - {{ include "ocp-ldap-proxy.fullname" . }}-config
+    - {{ include "ocp-ldap-proxy.fullname" . }}-serving-ca
+    {{- if .Values.ldapProxy.backend.caCert }}
+    - {{ include "ocp-ldap-proxy.fullname" . }}-proxy-ca
+    {{- end }}
+  verbs:
+    - get

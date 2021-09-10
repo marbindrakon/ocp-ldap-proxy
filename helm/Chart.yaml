@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ocp-ldap-proxy
+description: Deploys a simple LDAP proxy to provide failover.
+type: application
+version: 1.0.0
+appVersion: "main"

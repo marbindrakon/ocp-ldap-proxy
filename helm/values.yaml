@@ -1,0 +1,94 @@
+# Default values for ocp-ldap-proxy.
+
+ldapProxy:
+  tls:
+    # TLS options and ciphers for inbound connections to the proxy
+    bindTlsOptions: "prefer-client-ciphers no-sslv3 no-tlsv10 no-tlsv11 no-tls-tickets"
+    bindCiphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384"
+
+    # TLS options and ciphers for connections to the backend LDAP server(s)
+    serverTlsOptions: "no-sslv3 no-tlsv10 no-tlsv11 no-tls-tickets"
+    serverCiphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384"
+  backend:
+    # Check the health of the backend servers with a RootDSE query. Setting this to false will use naive TCP checks
+    ldapCheck: true
+
+    # Whether to use TLS for the backend LDAP connection, this should never
+    # be set to false in a production environment
+    useTls: true
+
+    # Set a primary backend server in the form HOST:PORT. The primary server
+    # will be used for all requests unless it is down.
+    #primaryServer: idm-1.rdu.example.com:636
+
+    # Set a list of backup servers in the form HOST:PORT. If the primary server
+    # is down, the first healthy server from this list will be used.
+    #backupServers:
+    #  - idm-2.rdu.example.com:636
+    #  - idm-1.dal.example.com:636
+
+    # The CA certificate to use for TLS verification on the backend connections
+    caCert: |
+      -----BEGIN CERTIFICATE-----
+      <BASE64 CERTIFICATE CONTENTS>
+      -----END CERTIFICATE-----
+
+servingCertSync:
+  # The LDAP proxy can optionally keep an arbitrary ConfigMap
+  # synced with a copy of the current serving CA cert in order to
+  # facilitate validation of TLS connections.
+  # Enabling this will create RBAC bindings to allow updates to the
+  # specified ConfigMap.
+  enabled: true
+  destinationConfigMap: ldap-proxy-ca
+  destinationNamespace: openshift-config
+
+
+networkPolicy:
+  # Create NetworkPolicy objects to restrict inbound access to the proxy
+  enabled: true
+  
+  # The created NetworkPolicy will allow access from namespaces with the
+  # given labels
+  sourceNamespaceLabels:
+    signal9.gg/ldap-proxy-allowed: ''
+
+# Allows for overriding the prefix of generated resource names
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+deployment:
+  replicaCount: 2
+
+  image:
+    repository: quay.io/aaustin/ocp-ldap-proxy
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "1.0"
+  
+  imagePullSecrets: []
+  
+  podAnnotations: {}
+  
+  resources: {}
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+  
+  nodeSelector: {}
+  
+  tolerations: []
+  
+  affinity: {}

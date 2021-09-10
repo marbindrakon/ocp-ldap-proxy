@@ -1,0 +1,31 @@
+global
+    pidfile     /var/run/haproxy.pid
+    maxconn     4000
+
+    # turn on stats unix socket
+    stats socket /var/lib/haproxy/stats
+
+    ssl-default-bind-ciphers {{ config.bind_ciphers }}
+    ssl-default-bind-options {{ config.bind_tls_options }}
+    ssl-default-server-ciphers {{ config.server_ciphers }}
+    ssl-default-server-options {{ config.server_tls_options }}
+    tune.ssl.default-dh-param 2048
+
+defaults
+    mode tcp
+    timeout client 10s
+    timeout server 30s
+    timeout connect 30s
+    {% if config.ldap_check %}
+    option ldap-check
+    {% endif %}
+
+frontend fe-ldap
+    bind *:6360 ssl crt /var/lib/haproxy/haproxy.pem
+    default_backend be-ldap
+
+backend be-ldap
+    server primary {{ config.primary_server }} {% if config.backend_tls %}ssl verify required ca-file /var/lib/haproxy/backend-ca.pem{% endif %}
+    {% for backup_server in config.backup_servers %}
+    server backup-server-{{ loop.index0 }} {{ backup_server }} backup {% if config.backend_tls %}ssl verify required ca-file /var/lib/haproxy/backend-ca.pem{% endif %}
+    {% endfor %}
